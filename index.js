@@ -3,7 +3,7 @@ const app = express()
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
 
 
@@ -43,13 +43,20 @@ async function run() {
         const search = req.query?.search
         if (search) {
           query.$or = [
+            
             { university_name: { $regex: search, $options: "i" } }, // Match name
-            { "university_location.city": { $regex: search, $options: "i" } }, // Match city
-            { "university_location.country": { $regex: search, $options: "i" } }, // Match country
+            { subject_name: { $regex: search, $options: "i" } }, // Match city
+            { scholarship_category: { $regex: search, $options: "i" } }, // Match country
           ]
         }
         const result = await shcholarshipCollection.find(query).toArray()
         res.send(result)
+    })
+    app.get('/scholarship/:id', async (req, res) =>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await shcholarshipCollection.findOne(query)
+      res.send(result)
     })
 
     await client.db("admin").command({ ping: 1 });
