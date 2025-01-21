@@ -27,6 +27,7 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     const shcholarshipCollection = client.db('ScholarshipDB').collection('Scholarship')
+    const userCollection = client.db('ScholashipDB').collection('users')
 
         // jwt related api
         app.post("/jwt", async (req, res) => {
@@ -58,6 +59,21 @@ async function run() {
       const result = await shcholarshipCollection.findOne(query)
       res.send(result)
     })
+    // user api 
+    app.get('/users', async (req, res) =>{
+       const result = await userCollection.find().toArray()
+       res.send(result)
+    })
+    app.post('/users', async(req, res) =>{
+      const user = req.body
+      const query = {email : user.email}
+      const listedUser = await userCollection.findOne(query)
+      if(listedUser){
+       return res.send({message : "User aleready existed"})
+      }
+      const result = await userCollection.insertOne(user)
+      res.send(result)
+    } )
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
