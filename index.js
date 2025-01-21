@@ -39,7 +39,16 @@ async function run() {
           res.send(token);
         });
     app.get('/scholarship', async(req, res)=>{
-        const result = await shcholarshipCollection.find().toArray()
+        const query ={}
+        const search = req.query?.search
+        if (search) {
+          query.$or = [
+            { university_name: { $regex: search, $options: "i" } }, // Match name
+            { "university_location.city": { $regex: search, $options: "i" } }, // Match city
+            { "university_location.country": { $regex: search, $options: "i" } }, // Match country
+          ]
+        }
+        const result = await shcholarshipCollection.find(query).toArray()
         res.send(result)
     })
 
