@@ -6,7 +6,8 @@ require('dotenv').config()
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const port = process.env.PORT || 5000
 
-app.use(express())
+
+app.use(cors())
 app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_admin}:${process.env.DB_pass}@cluster0.e6udf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -25,11 +26,28 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
+    const shcholarshipCollection = client.db('ScholarshipDB').collection('Scholarship')
+
+        // jwt related api
+        app.post("/jwt", async (req, res) => {
+          const user = req.body;
+    
+          const token = jwt.sign(user, process.env.access_token, {
+            expiresIn: "1h",
+          });
+    
+          res.send(token);
+        });
+    app.get('/scholarship', async(req, res)=>{
+        const result = await shcholarshipCollection.find().toArray()
+        res.send(result)
+    })
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
