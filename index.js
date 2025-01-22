@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
-
+const stripe = require('stripe')(process.env.stripe_key)
 
 app.use(cors())
 app.use(express.json())
@@ -27,7 +27,8 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     const shcholarshipCollection = client.db('ScholarshipDB').collection('Scholarship')
-    const userCollection = client.db('ScholashipDB').collection('users')
+    const userCollection = client.db('ScholarshipDB').collection('users')
+    const reviewCollection = client.db('ScholarshipDB').collection('reviews')
 
         // jwt related api
         app.post("/jwt", async (req, res) => {
@@ -61,7 +62,16 @@ async function run() {
     })
     // user api 
     app.get('/users', async (req, res) =>{
-       const result = await userCollection.find().toArray()
+      const email = req.query?.email
+      if(email){
+        const query = {email : email}
+        const result = await userCollection.findOne(query)
+        if(result){
+          return res.send(result)
+        }
+            
+      }
+      const result = await userCollection.find().toArray()
        res.send(result)
     })
     app.post('/users', async(req, res) =>{
@@ -74,6 +84,27 @@ async function run() {
       const result = await userCollection.insertOne(user)
       res.send(result)
     } )
+    
+    // review collection
+    app.get('/reviews', async (req, res) =>{
+      const result = await reviewCollection.find().toArray() 
+      res.send(result)
+    })
+
+    // payment intent
+    app.post('/create-payment-intent', async(req,res)=>{
+      const {price} = req.body
+      const amount = parseInt(price * 100)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount : amount,
+        currency : 'usd',
+        payment_method_types : ["card"]
+      })
+      res.send({
+        clientSecret : paymentIntent.client_secret
+      })
+    })
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
