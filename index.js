@@ -104,6 +104,15 @@ async function run() {
         clientSecret : paymentIntent.client_secret
       })
     })
+
+    // user delete api 
+    app.delete('/users/:id', async(req, res) =>{
+      const userId  = req.params.id
+      console.log(req.params.id)
+      const query = {_id : new ObjectId(userId) }
+      const result = await userCollection.deleteOne(query)
+      res.send(result)
+    })
     
 
     await client.db("admin").command({ ping: 1 });
