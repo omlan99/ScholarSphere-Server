@@ -63,7 +63,7 @@ async function run() {
     // post scholarship api
     app.post("/scholarship", async (req, res) => {
       const data = req.body;
-      console.log(data);
+     
       const result = await shcholarshipCollection.insertOne(data);
       res.send(result);
     });
@@ -130,17 +130,24 @@ async function run() {
       const email = req.query?.email
       if(email){
         query ={email : email}
-        const result = await applicationCollection.find(query).toArray
+        const result = await applicationCollection.find(query).toArray()
         res.send(result)
       }
         const result = await applicationCollection.find().toArray() 
         res.send(result)
     })
+    // application post api
+    app.post('/applications', async (req,res) =>{
+      const applicationData =  req.body;
+      const result = await applicationCollection.insertOne(applicationData)
+      res.send(result)
+    })
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
-      const amount = parseInt(price * 100);
+      const amount = parseInt(price) * 100;
+    
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
