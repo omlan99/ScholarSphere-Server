@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
     // Send a ping to confirm a successful connection
     const shcholarshipCollection = client
       .db("ScholarshipDB")
@@ -128,10 +128,11 @@ async function run() {
     // appliation api
     app.get('/applications', async (req, res) =>{
       const email = req.query?.email
-      if(email){
-        query ={email : email}
+      query ={email : email}
+      console.log(query)
+      if(query){
         const result = await applicationCollection.find(query).toArray()
-        res.send(result)
+        return  res.send(result)
       }
         const result = await applicationCollection.find().toArray() 
         res.send(result)
@@ -139,7 +140,19 @@ async function run() {
     // application post api
     app.post('/applications', async (req,res) =>{
       const applicationData =  req.body;
+      query = {email : applicationData.email }
+      if(query){
+        return res.send({ message: "user aleready applied" });
+      }
+      delete applicationData._id
       const result = await applicationCollection.insertOne(applicationData)
+      res.send(result)
+    })
+    // application delete api
+    app.delete('/applications/:id' , async(req, res) => {
+      const id = req.params.id
+      const query = {_id : new ObjectId(id)}
+      const result = await applicationCollection.deleteOne(query)
       res.send(result)
     })
 
@@ -159,10 +172,10 @@ async function run() {
     });
 
 
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // ); 
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    ); 
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
