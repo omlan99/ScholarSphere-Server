@@ -116,15 +116,33 @@ async function run() {
     
     // review collection
     app.get("/reviews", async (req, res) => {
+      const email = req.query?.email
+      if(email){
+        const query = {email : email}
+        const result = await reviewCollection.find(query).toArray()
+      }
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
 
     app.post("/reviews" , async(req,res) => {
       const reviewData = req.body
+      const query = {email : reviewData.email}
+      if(query){
+        return res.send({message : "review already given" })
+      }
       const result = await reviewCollection.insertOne(reviewData)
+      res.send(result)
+
     })
 
+    // review delete api
+    app.delete('/reviews/:id', async(req, res) => {
+      const id = req.params.id
+      const query = {_id : new ObjectId(id)}
+      const result = await reviewCollection.deleteOne(query)
+      res.send(result)
+    })
     // appliation api
     app.get('/applications', async (req, res) =>{
       const email = req.query?.email
