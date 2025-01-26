@@ -85,15 +85,11 @@ async function run() {
     // user get  api
     app.get("/users", async (req, res) => {
       const email = req.query?.email;
-      if (email) {
         const query = { email: email };
         const result = await userCollection.findOne(query);
-        if (result) {
-          return res.send(result);
-        }
-      }
-      const result = await userCollection.find().toArray();
-      res.send(result);
+
+           res.send(result);
+
     });
     //  user post api 
     app.post("/users", async (req, res) => {
@@ -120,6 +116,7 @@ async function run() {
       if(email){
         const query = {email : email}
         const result = await reviewCollection.find(query).toArray()
+        return res.send(result)
       }
       const result = await reviewCollection.find().toArray();
       res.send(result);
@@ -127,8 +124,12 @@ async function run() {
 
     app.post("/reviews" , async(req,res) => {
       const reviewData = req.body
-      const query = {email : reviewData.email}
-      if(query){
+      const query = {email : reviewData.email,
+        scholarship_id : reviewData.scholarship_id
+      }
+      const postedReview = await reviewCollection.findOne(query)
+
+      if(postedReview){
         return res.send({message : "review already given" })
       }
       const result = await reviewCollection.insertOne(reviewData)
@@ -146,9 +147,9 @@ async function run() {
     // appliation api
     app.get('/applications', async (req, res) =>{
       const email = req.query?.email
-      query ={email : email}
-      console.log(query)
-      if(query){
+    
+      if(email){
+        query ={email : email}
         const result = await applicationCollection.find(query).toArray()
         return  res.send(result)
       }
@@ -158,11 +159,15 @@ async function run() {
     // application post api
     app.post('/applications', async (req,res) =>{
       const applicationData =  req.body;
-      query = {email : applicationData.email }
-      if(query){
-        return res.send({ message: "user aleready applied" });
-      }
       delete applicationData._id
+      const query = {
+        scholarship_id: applicationData.scholarship_id,
+        email: applicationData.email,
+      };
+      const existingApplication = await applicationCollection.findOne(query)
+      if (existingApplication) {
+        return res.send({ message: "User already applied for this scholarship" });
+      }
       const result = await applicationCollection.insertOne(applicationData)
       res.send(result)
     })
