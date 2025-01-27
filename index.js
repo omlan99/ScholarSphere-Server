@@ -40,13 +40,13 @@ async function run() {
       const user = req.body;
 
       const token = jwt.sign(user, process.env.access_token, {
-        expiresIn: "1h",
+        expiresIn: "1h",  
       });
 
       res.send({ token });
     });
     const verifyToken = (req, res, next) => {
-      console.log("inside verified token", req.headers.authorization);
+    
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "forbidden access" });
       }
@@ -142,7 +142,7 @@ async function run() {
       const id = req.params.id;
       const { role } = req.body;
 
-      const validRoles = ["User", "Moderator", "Admin"];
+      const validRoles = ["user", "moderator", "admin"];
 
       if (!validRoles.includes(role)) {
         return res.status(400).send({ message: "Invalid role provided." });
@@ -218,6 +218,20 @@ async function run() {
       const result = await applicationCollection.findOne(query);
       res.send(result);
     });
+
+    app.patch('/application/:id', async(req,res) => {
+      const id = req.params.id
+      const {status} = req.body
+      const query = {_id : new ObjectId(id)}
+      const updateDoc = {
+        $set : {
+          status : status
+        }
+      }
+      const result = await applicationCollection.updateOne(query, updateDoc)
+      res.send(result)
+      
+    })
     // application post api
     app.post("/applications", async (req, res) => {
       const applicationData = req.body;
