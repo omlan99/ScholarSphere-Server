@@ -135,33 +135,27 @@ async function run() {
       res.send(result);
     });
 
+    // if (!validRoles.includes(role)) {
+    //        return res.status(400).send({ message: "Invalid role specified" });
+    // }
     app.patch("/users/role/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const { role } = req.body;
-      const validRoles = ["user", "moderator", "admin"];
+
+      const validRoles = ["User", "Moderator", "Admin"];
 
       if (!validRoles.includes(role)) {
-        return res.status(400).send({ message: "Invalid role specified" });
+        return res.status(400).send({ message: "Invalid role provided." });
       }
 
-      try {
-        const filter = { _id: new ObjectId(id) };
-        const updatedDoc = {
-          $set: { role: role },
-        };
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: { role: role },
+      };
 
-        const result = await userCollection.updateOne(filter, updatedDoc);
+      const result = await userCollection.updateOne(filter, updatedDoc);
 
-        if (result.modifiedCount > 0) {
-          res.send({ message: `User role updated to ${role}` });
-        } else {
-          res.status(404).send({ message: "User not found or role unchanged" });
-        }
-      } catch (error) {
-        res
-          .status(500)
-          .send({ message: "Internal Server Error", error: error.message });
-      }
+      res.send(result);
     });
 
     // user delete api
