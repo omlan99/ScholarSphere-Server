@@ -64,12 +64,25 @@ async function run() {
       const email = req.decoded.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      const admin = user?.role === "admin";
-      if (!admin) {
-        res.status(403).send({ message: "forbidden access" });
+      
+      if (!user || user.role !== "admin") {
+          return res.status(403).send({ message: "Forbidden access" });
       }
+  
       next();
-    };
+  };
+    const verifyModerator = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      
+      if (!user || user.role !== "moderator") {
+          return res.status(403).send({ message: "Forbidden access" });
+      }
+  
+      next();
+  };
+    
 
     // all sholarship data api
     app.get("/scholarship", async (req, res) => {
@@ -110,18 +123,26 @@ async function run() {
     });
     // user get  api
     app.get("/users", async (req, res) => {
-      // const email = req.query?.email;
-      //   if(email){
-      //     const query = { email: email };
-      //     const result = await userCollection.findOne(query);
+      const email = req.query?.email;
+        if(email){
+          const query = { email: email };
+          const result = await userCollection.findOne(query);
 
-      //        res.send(result);
-      //   }
+             res.send(result);
+        }
 
       const result = await userCollection.find().toArray();
 
       res.send(result);
     });
+    
+    app.get('/users/:email', async(req, res) =>{
+      const email = req.params.email
+      console.log(email)
+      const query = {email : email}
+      const result = await userCollection.findOne(query)
+      res.send(result)
+    })
 
     //  user post api
     app.post("/users", async (req, res) => {
@@ -201,16 +222,19 @@ async function run() {
       res.send(result);
     });
     // appliation api
+    app.get('/applications', async(req,res) =>{
+          const result = await applicationCollection.find().toArray();
+      res.send(result);
+    })
     app.get("/applications", async (req, res) => {
       const email = req.query?.email;
-
+      let query = {};
       if (email) {
         query = { email: email };
         const result = await applicationCollection.find(query).toArray();
         return res.send(result);
       }
-      const result = await applicationCollection.find().toArray();
-      res.send(result);
+  
     });
     app.get("/applications/:id", async (req, res) => {
       const id = req.params.id;
@@ -221,11 +245,12 @@ async function run() {
 
     app.patch('/application/:id', async(req,res) => {
       const id = req.params.id
-      const {status} = req.body
+      const {status, feedback} = req.body
       const query = {_id : new ObjectId(id)}
       const updateDoc = {
         $set : {
-          status : status
+          ...(status && { status }),
+          ...(feedback && { feedback })
         }
       }
       const result = await applicationCollection.updateOne(query, updateDoc)
