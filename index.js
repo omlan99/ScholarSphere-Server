@@ -7,7 +7,23 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.stripe_key);
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173", // local
+  "https://scholarsphere-auth.web.app" // deployed
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_admin}:${process.env.DB_pass}@cluster0.e6udf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -24,9 +40,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
     // Send a ping to confirm a successful connection
-    const shcholarshipCollection = client
+    const scholarshipCollection = client
       .db("ScholarshipDB")
       .collection("Scholarship");
     const userCollection = client.db("ScholarshipDB").collection("users");
@@ -95,7 +111,7 @@ async function run() {
           { scholarship_category: { $regex: search, $options: "i" } }, // Match country
         ];
       }
-      const result = await shcholarshipCollection.find(query).toArray();
+      const result = await scholarshipCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -103,7 +119,7 @@ async function run() {
     app.post("/scholarship", async (req, res) => {
       const data = req.body;
 
-      const result = await shcholarshipCollection.insertOne(data);
+      const result = await scholarshipCollection.insertOne(data);
       res.send(result);
     });
 
@@ -111,14 +127,14 @@ async function run() {
     app.get("/scholarship/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await shcholarshipCollection.findOne(query);
+      const result = await scholarshipCollection.findOne(query);
       res.send(result);
     });
     // scholarship delete api
     app.delete("/scholarship/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await shcholarshipCollection.deleteOne(query);
+      const result = await scholarshipCollection.deleteOne(query);
       res.send(result);
     });
     // user get  api
